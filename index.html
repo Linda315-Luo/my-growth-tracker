@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>我的成长追踪器</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --blue-50: #E6F1FB;
+  --blue-100: #B5D4F4;
+  --blue-200: #85B7EB;
+  --blue-400: #378ADD;
+  --blue-600: #185FA5;
+  --blue-800: #0C447C;
+  --green-50: #EAF3DE;
+  --green-400: #639922;
+  --green-600: #3B6D11;
+  --amber-50: #FAEEDA;
+  --amber-400: #BA7517;
+  --amber-600: #854F0B;
+  --gray-50: #F1EFE8;
+  --gray-200: #B4B2A9;
+  --gray-400: #888780;
+  --gray-600: #5F5E5A;
+  --bg: #F4F8FD;
+  --surface: #ffffff;
+  --border: rgba(55,138,221,0.15);
+  --text: #1a2a3a;
+  --text-secondary: #4a6070;
+  --text-muted: #7a9aaa;
+  --radius: 14px;
+  --radius-sm: 8px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding-bottom:3rem}
+
+/* header */
+.header{background:var(--blue-800);padding:1.5rem 1.25rem 2.5rem;position:relative;overflow:hidden}
+.header::before{content:'';position:absolute;top:-40px;right:-40px;width:200px;height:200px;border-radius:50%;background:rgba(255,255,255,0.05)}
+.header::after{content:'';position:absolute;bottom:-60px;left:-20px;width:160px;height:160px;border-radius:50%;background:rgba(255,255,255,0.04)}
+.header-name{font-size:22px;font-weight:700;color:#fff;position:relative}
+.header-sub{font-size:13px;color:var(--blue-200);margin-top:4px;position:relative}
+.header-dream{font-size:13px;color:rgba(255,255,255,0.7);margin-top:12px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.15);position:relative;line-height:1.6}
+.header-date{font-family:'DM Mono',monospace;font-size:11px;color:var(--blue-200);margin-top:8px;position:relative}
+
+/* nav tabs */
+.nav{display:flex;gap:0;background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;overflow-x:auto}
+.nav::-webkit-scrollbar{display:none}
+.nav-btn{flex:1;min-width:70px;padding:.75rem .5rem;font-size:12px;font-family:'Noto Sans SC',sans-serif;color:var(--text-muted);background:none;border:none;border-bottom:2px solid transparent;cursor:pointer;transition:all .2s;white-space:nowrap}
+.nav-btn.active{color:var(--blue-600);border-bottom-color:var(--blue-400);font-weight:500}
+
+/* pages */
+.page{display:none;padding:1.25rem;animation:fadeIn .2s ease}
+.page.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+/* cards */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.125rem;margin-bottom:.875rem}
+.card-title{font-size:14px;font-weight:500;color:var(--text);margin-bottom:.875rem;display:flex;align-items:center;gap:7px}
+.card-title .icon{width:22px;height:22px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0}
+
+/* stat grid */
+.stat-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:1rem}
+.stat{background:var(--blue-50);border-radius:var(--radius-sm);padding:.875rem}
+.stat-label{font-size:11px;color:var(--blue-600);margin-bottom:3px;font-weight:500}
+.stat-val{font-size:21px;font-weight:700;color:var(--blue-800);font-family:'DM Mono',monospace}
+.stat-sub{font-size:11px;color:var(--text-muted);margin-top:2px}
+
+/* progress */
+.progress-row{margin-bottom:.75rem}
+.progress-label{display:flex;justify-content:space-between;font-size:13px;color:var(--text-secondary);margin-bottom:5px}
+.progress-pct{font-family:'DM Mono',monospace;font-size:12px;color:var(--text-muted)}
+.bar-bg{height:8px;background:var(--gray-50);border-radius:4px;overflow:hidden}
+.bar-fill{height:100%;border-radius:4px;transition:width .8s cubic-bezier(.4,0,.2,1)}
+.bar-blue{background:var(--blue-400)}
+.bar-green{background:var(--green-400)}
+.bar-amber{background:var(--amber-400)}
+
+/* checkin calendar */
+.week-labels{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:4px}
+.week-lbl{font-size:10px;color:var(--text-muted);text-align:center}
+.checkin-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.day-dot{height:32px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:11px;font-family:'DM Mono',monospace;color:var(--text-muted);cursor:pointer;border:1px solid var(--border);background:var(--gray-50);transition:all .15s;user-select:none}
+.day-dot.done{background:var(--blue-50);border-color:var(--blue-200);color:var(--blue-600);font-weight:500}
+.day-dot.today{border-color:var(--blue-400);color:var(--blue-600);font-weight:700}
+.day-dot.future{opacity:.4;cursor:default}
+.streak-badge{display:inline-flex;align-items:center;gap:5px;background:var(--blue-50);color:var(--blue-800);font-size:12px;padding:5px 12px;border-radius:20px;margin-top:.75rem;font-weight:500}
+
+/* buttons */
+.btn{padding:.5rem 1rem;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:13px;font-family:'Noto Sans SC',sans-serif;cursor:pointer;transition:all .15s}
+.btn:hover{background:var(--blue-50);border-color:var(--blue-200)}
+.btn:active{transform:scale(0.98)}
+.btn-primary{background:var(--blue-400);color:#fff;border-color:var(--blue-400)}
+.btn-primary:hover{background:var(--blue-600);border-color:var(--blue-600)}
+.btn-row{display:flex;gap:8px;margin-top:.75rem;flex-wrap:wrap}
+
+/* input */
+.input{width:100%;padding:.5rem .75rem;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--gray-50);color:var(--text);font-size:13px;font-family:'Noto Sans SC',sans-serif;outline:none;transition:border .2s}
+.input:focus{border-color:var(--blue-400);background:#fff}
+.input-row{display:flex;gap:8px;align-items:center;margin-top:.5rem}
+.input-row .input{flex:1}
+textarea.input{resize:none;line-height:1.6}
+
+/* tags */
+.tag{font-size:11px;padding:2px 8px;border-radius:10px;display:inline-block}
+.tag-blue{background:var(--blue-50);color:var(--blue-600)}
+.tag-green{background:var(--green-50);color:var(--green-600)}
+.tag-amber{background:var(--amber-50);color:var(--amber-600)}
+.tag-gray{background:var(--gray-50);color:var(--gray-600)}
+
+/* ielts cards */
+.skill-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:.75rem;overflow:hidden}
+.skill-header{display:flex;align-items:center;justify-content:space-between;padding:1rem 1.125rem;cursor:pointer;user-select:none}
+.skill-name{font-size:14px;font-weight:500;color:var(--text);display:flex;align-items:center;gap:8px}
+.skill-body{padding:0 1.125rem 1rem;border-top:1px solid var(--border)}
+.detail-row{display:flex;gap:8px;margin-bottom:.5rem;align-items:flex-start;padding-top:.5rem}
+.detail-text{font-size:13px;color:var(--text-secondary);line-height:1.6}
+.detail-text strong{color:var(--text);font-weight:500}
+.you-block{background:var(--blue-50);border-radius:var(--radius-sm);padding:.625rem .875rem;margin:.5rem 0}
+.you-label{font-size:11px;color:var(--blue-600);font-weight:500;margin-bottom:3px}
+.you-text{font-size:13px;color:var(--blue-800);line-height:1.6}
+.tip-row{display:flex;gap:8px;padding:.375rem 0;border-bottom:1px solid var(--border);align-items:flex-start}
+.tip-row:last-child{border-bottom:none}
+.tip-num{width:19px;height:19px;border-radius:50%;background:var(--blue-50);color:var(--blue-600);font-size:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;font-weight:500}
+.tip-text{font-size:13px;color:var(--text-secondary);line-height:1.5}
+.chevron{font-size:16px;color:var(--text-muted);transition:transform .25s;display:inline-block}
+.open .chevron{transform:rotate(180deg)}
+
+/* timeline */
+.tl-row{display:flex;gap:10px;padding:.5rem 0;border-bottom:1px solid var(--border)}
+.tl-row:last-child{border-bottom:none}
+.tl-left{display:flex;flex-direction:column;align-items:center;gap:0;padding-top:3px}
+.tl-dot{width:9px;height:9px;border-radius:50%;background:var(--blue-200);flex-shrink:0}
+.tl-dot.done{background:var(--green-400)}
+.tl-dot.goal{background:var(--blue-400)}
+.tl-line{width:1px;flex:1;background:var(--border);min-height:8px}
+.tl-content{flex:1;padding-bottom:.375rem}
+.tl-title{font-size:13px;color:var(--text);line-height:1.5}
+.tl-date{font-size:11px;color:var(--text-muted);margin-top:2px;font-family:'DM Mono',monospace}
+
+/* notes list */
+.note-item{background:var(--gray-50);border-radius:var(--radius-sm);padding:.75rem;margin-bottom:.5rem}
+.note-date{font-size:11px;color:var(--text-muted);font-family:'DM Mono',monospace;margin-bottom:3px}
+.note-content{font-size:13px;color:var(--text);line-height:1.6}
+
+/* road map */
+.road-row{display:flex;gap:10px;padding:.5rem 0;border-bottom:1px solid var(--border);align-items:flex-start}
+.road-row:last-child{border-bottom:none}
+.road-month{font-size:11px;color:var(--text-muted);min-width:58px;padding-top:2px;font-family:'DM Mono',monospace}
+.road-text{font-size:13px;color:var(--text);line-height:1.5}
+
+/* about me */
+.about-row{display:flex;gap:10px;padding:.5rem 0;border-bottom:1px solid var(--border);align-items:flex-start}
+.about-row:last-child{border-bottom:none}
+.about-icon{font-size:16px;flex-shrink:0;margin-top:1px}
+.about-text{font-size:13px;color:var(--text-secondary);line-height:1.5}
+.about-text strong{color:var(--text);font-weight:500}
+
+/* toast */
+.toast{position:fixed;bottom:2rem;left:50%;transform:translateX(-50%) translateY(20px);background:var(--blue-800);color:#fff;font-size:13px;padding:.5rem 1.25rem;border-radius:20px;opacity:0;transition:all .3s;pointer-events:none;z-index:999;white-space:nowrap}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* overview grid for ielts */
+.ov-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:1rem}
+.ov-card{background:var(--blue-50);border-radius:var(--radius-sm);padding:.75rem}
+.ov-title{font-size:14px;font-weight:500;color:var(--blue-800)}
+.ov-sub{font-size:11px;color:var(--text-muted);margin-top:2px}
+
+.divider{font-size:11px;color:var(--text-muted);font-weight:500;letter-spacing:.06em;margin:1.25rem 0 .5rem}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-name">你好，我了解你 ✦</div>
+  <div class="header-sub">财务管理本科 · 深圳外企 · 目标：香港工作</div>
+  <div class="header-dream">月薪5500，助学贷款24000，每天20分钟，慢慢来。<br>1年内，去香港。</div>
+  <div class="header-date" id="header-date"></div>
+</div>
+
+<nav class="nav">
+  <button class="nav-btn active" onclick="showPage('home',this)">首页</button>
+  <button class="nav-btn" onclick="showPage('checkin',this)">打卡</button>
+  <button class="nav-btn" onclick="showPage('finance',this)">财务</button>
+  <button class="nav-btn" onclick="showPage('ielts',this)">雅思</button>
+  <button class="nav-btn" onclick="showPage('notes',this)">笔记</button>
+  <button class="nav-btn" onclick="showPage('about',this)">关于我</button>
+</nav>
+
+<div id="page-home" class="page active">
+  <div class="stat-grid">
+    <div class="stat">
+      <div class="stat-label">贷款剩余</div>
+      <div class="stat-val" id="home-loan">¥24,000</div>
+      <div class="stat-sub">目标2027年初清零</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">连续打卡</div>
+      <div class="stat-val" id="home-streak">0</div>
+      <div class="stat-sub">天</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">雅思目标</div>
+      <div class="stat-val">6.0</div>
+      <div class="stat-sub">预计6~8个月备考</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">听力练习</div>
+      <div class="stat-val" id="home-ielts">0</div>
+      <div class="stat-sub">天累计</div>
+    </div>
+  </div>
+
+  <div class="divider">三条线进度</div>
+  <div class="card">
+    <div class="progress-row">
+      <div class="progress-label"><span>📚 英语/雅思</span><span class="progress-pct" id="pct-ielts">0%</span></div>
+      <div class="bar-bg"><div class="bar-fill bar-blue" id="bar-ielts" style="width:0%"></div></div>
+    </div>
+    <div class="progress-row">
+      <div class="progress-label"><span>💰 贷款还款</span><span class="progress-pct" id="pct-loan">0%</span></div>
+      <div class="bar-bg"><div class="bar-fill bar-amber" id="bar-loan" style="width:0%"></div></div>
+    </div>
+    <div class="progress-row" style="margin-bottom:0">
+      <div class="progress-label"><span>💼 财务技能</span><span class="progress-pct">5%</span></div>
+      <div class="bar-bg"><div class="bar-fill bar-green" style="width:5%"></div></div>
+    </div>
+  </div>
+
+  <div class="divider">近期里程碑</div>
+  <div class="card">
+    <div class="tl-row">
+      <div class="tl-left"><div class="tl-dot done"></div><div class="tl-line"></div></div>
+      <div class="tl-content"><div class="tl-title">下载雅思哥，完成第一节听力 <span class="tag tag-green">已完成</span></div><div class="tl-date">2026-06</div></div>
+    </div>
+    <div class="tl-row">
+      <div class="tl-left"><div class="tl-dot"></div><div class="tl-line"></div></div>
+      <div class="tl-content"><div class="tl-title">收回爸妈2600元 → 还贷款</div><div class="tl-date">2026-06-15</div></div>
+    </div>
+    <div class="tl-row">
+      <div class="tl-left"><div class="tl-dot"></div><div class="tl-line"></div></div>
+      <div class="tl-content"><div class="tl-title">听力练完C5全套（4套16节）</div><div class="tl-date">第1~2个月</div></div>
+    </div>
+    <div class="tl-row">
+      <div class="tl-left"><div class="tl-dot"></div><div class="tl-line"></div></div>
+      <div class="tl-content"><div class="tl-title">贷款还清一半（¥12,000）</div><div class="tl-date">预计2026-09</div></div>
+    </div>
+    <div class="tl-row">
+      <div class="tl-left"><div class="tl-dot"></div><div class="tl-line"></div></div>
+      <div class="tl-content"><div class="tl-title">报名雅思正式考试</div><div class="tl-date">第7~8个月</div></div>
+    </div>
+    <div class="tl-row">
+      <div class="tl-left"><div class="tl-dot goal"></div></div>
+      <div class="tl-content"><div class="tl-title">拿到香港工作offer ✈</div><div class="tl-date">目标：2027年上半年</div></div>
+    </div>
+  </div>
+</div>
+
+<div id="page-checkin" class="page">
+  <div class="card">
+    <div class="card-title">本周打卡</div>
+    <div class="week-labels">
+      <div class="week-lbl">一</div><div class="week-lbl">二</div><div class="week-lbl">三</div>
+      <div class="week-lbl">四</div><div class="week-lbl">五</div><div class="week-lbl">六</div><div class="week-lbl">日</div>
+    </div>
+    <div class="checkin-grid" id="checkin-grid"></div>
+    <div class="streak-badge" id="streak-badge">🔥 开始你的第1天</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">今日打卡</div>
+    <div class="btn-row">
+      <button class="btn" id="btn-duolingo" onclick="checkin('duolingo')">✓ 多邻国</button>
+      <button class="btn" id="btn-ielts" onclick="checkin('ielts')">✓ 雅思听力</button>
+    </div>
+    <div style="margin-top:.75rem;font-size:12px;color:var(--text-muted)">每天只需要20分钟，躺着听都行。</div>
+  </div>
+
+  <div class="divider">过去28天记录</div>
+  <div class="card">
+    <div id="month-grid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px"></div>
+  </div>
+</div>
+
+<div id="page-finance" class="page">
+  <div class="stat-grid">
+    <div class="stat">
+      <div class="stat-label">贷款剩余</div>
+      <div class="stat-val" id="fin-remain">¥24,000</div>
+      <div class="stat-sub">本金</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">已还金额</div>
+      <div class="stat-val" id="fin-repaid">¥0</div>
+      <div class="stat-sub" id="fin-pct">0% 完成</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">记录还款</div>
+    <div class="input-row">
+      <input class="input" type="number" id="repay-input" placeholder="本次还款金额（元）">
+      <button class="btn btn-primary" onclick="updateLoan()">记录</button>
+    </div>
+    <div style="margin-top:.75rem">
+      <div class="bar-bg"><div class="bar-fill bar-amber" id="fin-bar" style="width:0%"></div></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">还款计划</div>
+    <div class="road-row"><div class="road-month">每月</div><div class="road-text">固定还款 ¥2,000，发薪日当天转</div></div>
+    <div class="road-row"><div class="road-month">6月15日</div><div class="road-text">收回爸妈2,600元，直接额外还款</div></div>
+    <div class="road-row"><div class="road-month">2026-12</div><div class="road-text">预计已还约 ¥16,600，剩余 ¥7,400</div></div>
+    <div class="road-row"><div class="road-month">2027-04</div><div class="road-text">贷款完全清零 🎉</div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">每月收支</div>
+    <div class="road-row"><div class="road-month">月薪</div><div class="road-text" style="color:var(--green-600);font-weight:500">+¥5,500</div></div>
+    <div class="road-row"><div class="road-month">房租水电</div><div class="road-text">−¥1,483</div></div>
+    <div class="road-row"><div class="road-month">吃饭杂费</div><div class="road-text">−¥1,500</div></div>
+    <div class="road-row"><div class="road-month">还贷款</div><div class="road-text">−¥2,000</div></div>
+    <div class="road-row"><div class="road-month">剩余零花</div><div class="road-text" style="color:var(--blue-600);font-weight:500">≈ ¥517</div></div>
+  </div>
+</div>
+
+<div id="page-ielts" class="page">
+  <div class="ov-grid">
+    <div class="ov-card"><div class="ov-title">听力</div><div class="ov-sub">30分钟 · 40题</div><span class="tag tag-blue" style="margin-top:5px;display:inline-block">现在就练</span></div>
+    <div class="ov-card"><div class="ov-title">阅读</div><div class="ov-sub">60分钟 · 40题</div><span class="tag tag-green" style="margin-top:5px;display:inline-block">第2个月</span></div>
+    <div class="ov-card"><div class="ov-title">写作</div><div class="ov-sub">60分钟 · 2篇</div><span class="tag tag-amber" style="margin-top:5px;display:inline-block">第5个月</span></div>
+    <div class="ov-card"><div class="ov-title">口语</div><div class="ov-sub">11~14分钟 · 3部分</div><span class="tag tag-gray" style="margin-top:5px;display:inline-block">持续积累</span></div>
+  </div>
+
+  <div id="sc-listen" class="skill-card">
+    <div class="skill-header" onclick="toggleSkill('sc-listen')">
+      <div class="skill-name">🎧 听力 <span class="tag tag-blue">优先突破</span></div>
+      <span class="chevron">▾</span>
+    </div>
+    <div class="skill-body" style="display:none">
+      <div class="detail-row"><div class="detail-text"><strong>考什么：</strong>4个Section，难度递增。S1日常对话最简单，S4学术讲座最难。每题只播一遍，不能回放。题型有填空、选择、配对、地图题。</div></div>
+      <div class="you-block"><div class="you-label">你的情况</div><div class="you-text">零基础，已完成C5 S1——这是最明智的起点。四级基础够用S1和S2，主要适应"只播一遍"的节奏。</div></div>
+      <div style="margin-top:.625rem;font-size:12px;font-weight:500;color:var(--text-muted);margin-bottom:.375rem">怎么练</div>
+      <div class="tip-row"><div class="tip-num">1</div><div class="tip-text">每天雅思哥刷1个Section，C5 S1开始按顺序往后</div></div>
+      <div class="tip-row"><div class="tip-num">2</div><div class="tip-text">错的地方回放听懂，不用抄词，躺着听就行</div></div>
+      <div class="tip-row"><div class="tip-num">3</div><div class="tip-text">S1和S2做够20个再挑战S3，S4等阅读跟上再说</div></div>
+    </div>
+  </div>
+
+  <div id="sc-read" class="skill-card">
+    <div class="skill-header" onclick="toggleSkill('sc-read')">
+      <div class="skill-name">📖 阅读 <span class="tag tag-green">第2~3个月</span></div>
+      <span class="chevron">▾</span>
+    </div>
+    <div class="skill-body" style="display:none">
+      <div class="detail-row"><div class="detail-text"><strong>考什么：</strong>3篇文章40题，60分钟。判断题（T/F/NG）最多人栽跟头，NG最难判断。</div></div>
+      <div class="you-block"><div class="you-label">你的情况</div><div class="you-text">工作中英文邮件靠翻译，阅读速度和词汇需要提升。但听力练多了词汇自然涨，第2个月再开始刚好。</div></div>
+      <div style="margin-top:.625rem;font-size:12px;font-weight:500;color:var(--text-muted);margin-bottom:.375rem">怎么练</div>
+      <div class="tip-row"><div class="tip-num">1</div><div class="tip-text">周末做一篇，不限时先做，再对答案看解析</div></div>
+      <div class="tip-row"><div class="tip-num">2</div><div class="tip-text">重点练判断题，True/False/NG要看官方逻辑解释</div></div>
+      <div class="tip-row"><div class="tip-num">3</div><div class="tip-text">不认识的词靠上下文猜，别查字典打断节奏</div></div>
+    </div>
+  </div>
+
+  <div id="sc-write" class="skill-card">
+    <div class="skill-header" onclick="toggleSkill('sc-write')">
+      <div class="skill-name">✏️ 写作 <span class="tag tag-amber">第5个月</span></div>
+      <span class="chevron">▾</span>
+    </div>
+    <div class="skill-body" style="display:none">
+      <div class="detail-row"><div class="detail-text"><strong>考什么：</strong>Task1图表描述（150词，20分钟）+ Task2议论文（250词，40分钟）。Task2占分更重。</div></div>
+      <div class="you-block"><div class="you-label">你的情况</div><div class="you-text">财务背景对Task1图表描述是优势，你看得懂数据。Task2有固定结构可套，不需要多有创意。等听力阅读有基础再练效率更高。</div></div>
+      <div style="margin-top:.625rem;font-size:12px;font-weight:500;color:var(--text-muted);margin-bottom:.375rem">怎么练</div>
+      <div class="tip-row"><div class="tip-num">1</div><div class="tip-text">先背Task2万能结构：引入+观点1+观点2+总结</div></div>
+      <div class="tip-row"><div class="tip-num">2</div><div class="tip-text">Task1看雅思哥图表描述模板，照着写就行</div></div>
+      <div class="tip-row"><div class="tip-num">3</div><div class="tip-text">写完用AI看语法错误，比找老师便宜</div></div>
+    </div>
+  </div>
+
+  <div id="sc-speak" class="skill-card">
+    <div class="skill-header" onclick="toggleSkill('sc-speak')">
+      <div class="skill-name">🎙️ 口语 <span class="tag tag-gray">持续积累</span></div>
+      <span class="chevron">▾</span>
+    </div>
+    <div class="skill-body" style="display:none">
+      <div class="detail-row"><div class="detail-text"><strong>考什么：</strong>与考官面对面3部分，约12分钟。流利比准确更重要——说错不扣分，停顿太多才扣分。目标5.5保底。</div></div>
+      <div class="you-block"><div class="you-label">你的情况</div><div class="you-text">简单日常英语勉强能沟通但不流利。听力练多了开口会越来越自然。口语不建议现在专门练，考前2个月冲刺就够。</div></div>
+      <div style="margin-top:.625rem;font-size:12px;font-weight:500;color:var(--text-muted);margin-bottom:.375rem">现在能做的（不费力）</div>
+      <div class="tip-row"><div class="tip-num">1</div><div class="tip-text">把手机系统语言换成英文，被动接触</div></div>
+      <div class="tip-row"><div class="tip-num">2</div><div class="tip-text">听力练习时偶尔跟读一遍，模仿语调</div></div>
+      <div class="tip-row"><div class="tip-num">3</div><div class="tip-text">考前2个月用雅思哥口语题库，每天10分钟</div></div>
+    </div>
+  </div>
+
+  <div class="divider">你的备考路线</div>
+  <div class="card">
+    <div class="road-row"><div class="road-month">现在</div><div class="road-text">只练听力S1~S2，每天20分钟，雅思哥C5开始</div></div>
+    <div class="road-row"><div class="road-month">第2个月</div><div class="road-text">听力推进到S3，周末加一篇阅读（不限时）</div></div>
+    <div class="road-row"><div class="road-month">第3~4个月</div><div class="road-text">听力全Section都练，阅读开始限时，练判断题</div></div>
+    <div class="road-row"><div class="road-month">第5个月</div><div class="road-text">加入写作，背Task2框架，开始动笔</div></div>
+    <div class="road-row"><div class="road-month">第6~7个月</div><div class="road-text">四科同时练，做完整模拟题，报名考试</div></div>
+    <div class="road-row"><div class="road-month">第7~8个月</div><div class="road-text">参加正式考试，目标6.0，口语5.5保底 🎯</div></div>
+  </div>
+</div>
+
+<div id="page-notes" class="page">
+  <div class="card">
+    <div class="card-title">写今天的笔记</div>
+    <textarea class="input" id="note-input" rows="4" placeholder="记录今天的想法、困难、或一句话感受..."></textarea>
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="saveNote()">保存笔记</button>
+    </div>
+  </div>
+
+  <div class="divider">历史笔记</div>
+  <div id="notes-list"></div>
+  <div id="notes-empty" style="text-align:center;padding:2rem;color:var(--text-muted);font-size:13px">还没有笔记，写下今天的第一条吧</div>
+</div>
+
+<div id="page-about" class="page">
+  <div class="card">
+    <div class="card-title">📋 关于你</div>
+    <div class="about-row"><div class="about-icon">🎓</div><div class="about-text"><strong>学历：</strong>财务管理本科，2025年6月毕业</div></div>
+    <div class="about-row"><div class="about-icon">📜</div><div class="about-text"><strong>证书：</strong>计算机二级、初级会计证、英语四级（478分）</div></div>
+    <div class="about-row"><div class="about-icon">🏢</div><div class="about-text"><strong>现在：</strong>深圳龙岗外企，涉及出口，上班9:00~18:30</div></div>
+    <div class="about-row"><div class="about-icon">💼</div><div class="about-text"><strong>工作内容：</strong>提供报税资料、更新国外现金流表格、包材首件确认、MercadoLibre市场调查</div></div>
+    <div class="about-row"><div class="about-icon">💰</div><div class="about-text"><strong>月薪：</strong>税后5500元，每月可还贷2000元不太痛苦</div></div>
+    <div class="about-row"><div class="about-icon">🎯</div><div class="about-text"><strong>目标：</strong>雅思6.0，1年内去香港做财务工作</div></div>
+    <div class="about-row"><div class="about-icon">💡</div><div class="about-text"><strong>了解自己：</strong>不自律，不喜欢太累，但有多邻国打卡习惯——每天20分钟，挂载在已有习惯上</div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">📌 执行原则</div>
+    <div class="about-row"><div class="about-icon">1️⃣</div><div class="about-text">不专门背单词，在听力里遇到再学</div></div>
+    <div class="about-row"><div class="about-icon">2️⃣</div><div class="about-text">听力练习就当换个App刷，躺着听就行</div></div>
+    <div class="about-row"><div class="about-icon">3️⃣</div><div class="about-text">每月发薪日当天自动还贷2000元</div></div>
+    <div class="about-row"><div class="about-icon">4️⃣</div><div class="about-text">慢一点还，但能真正执行，比放弃强</div></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const KEY = 'growth_v2';
+let s = {checkins:{}, loanRepaid:0, ieltsDays:0, notes:[]};
+
+function load(){try{const d=localStorage.getItem(KEY);if(d)s=Object.assign(s,JSON.parse(d))}catch(e){}}
+function persist(){try{localStorage.setItem(KEY,JSON.stringify(s))}catch(e){}}
+
+function todayKey(){const d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate()}
+function fmtDate(k){const p=k.split('-');return p[0]+'年'+p[1]+'月'+p[2]+'日'}
+
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2000)}
+
+function showPage(id,btn){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  btn.classList.add('active');
+}
+
+function calcStreak(){
+  let streak=0;const today=new Date();
+  for(let i=0;i<365;i++){
+    const d=new Date(today);d.setDate(today.getDate()-i);
+    const k=d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();
+    if(s.checkins[k])streak++;else if(i>0)break;
+  }
+  return streak;
+}
+
+function renderAll(){
+  const today=new Date();
+  document.getElementById('header-date').textContent=today.getFullYear()+'年'+(today.getMonth()+1)+'月'+today.getDate()+'日';
+
+  const streak=calcStreak();
+  document.getElementById('home-streak').textContent=streak;
+  document.getElementById('home-ielts').textContent=s.ieltsDays||0;
+  const remain=24000-(s.loanRepaid||0);
+  document.getElementById('home-loan').textContent='¥'+remain.toLocaleString();
+  document.getElementById('fin-remain').textContent='¥'+remain.toLocaleString();
+  document.getElementById('fin-repaid').textContent='¥'+(s.loanRepaid||0).toLocaleString();
+  const lp=Math.round(((s.loanRepaid||0)/24000)*100);
+  document.getElementById('fin-pct').textContent=lp+'% 完成';
+  document.getElementById('fin-bar').style.width=lp+'%';
+  document.getElementById('bar-loan').style.width=lp+'%';
+  document.getElementById('pct-loan').textContent=lp+'%';
+  const ip=Math.min(100,Math.round(((s.ieltsDays||0)/180)*100));
+  document.getElementById('bar-ielts').style.width=ip+'%';
+  document.getElementById('pct-ielts').textContent=ip+'%';
+
+  const sb=document.getElementById('streak-badge');
+  sb.textContent=streak>0?'🔥 连续打卡 '+streak+' 天，继续！':'🔥 开始你的第1天';
+
+  renderCalendar();
+  renderMonthGrid();
+  renderNotes();
+  updateCheckinBtns();
+}
+
+function renderCalendar(){
+  const grid=document.getElementById('checkin-grid');
+  if(!grid)return;
+  grid.innerHTML='';
+  const today=new Date();
+  const dow=today.getDay();
+  const mondayOffset=dow===0?6:dow-1;
+  for(let i=0;i<7;i++){
+    const d=new Date(today);d.setDate(today.getDate()-mondayOffset+i);
+    const k=d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();
+    const isToday=k===todayKey();
+    const isDone=s.checkins[k];
+    const isFuture=d>today;
+    const el=document.createElement('div');
+    el.className='day-dot'+(isDone?' done':'')+(isToday?' today':'')+(isFuture?' future':'');
+    el.textContent=d.getDate();
+    grid.appendChild(el);
+  }
+}
+
+function renderMonthGrid(){
+  const grid=document.getElementById('month-grid');
+  if(!grid)return;
+  grid.innerHTML='';
+  const today=new Date();
+  for(let i=27;i>=0;i--){
+    const d=new Date(today);d.setDate(today.getDate()-i);
+    const k=d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();
+    const el=document.createElement('div');
+    el.style.cssText='height:26px;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:10px;font-family:DM Mono,monospace;border:1px solid var(--border);';
+    if(s.checkins[k]){el.style.background='var(--blue-50)';el.style.color='var(--blue-600)';el.style.borderColor='var(--blue-200)';}
+    else{el.style.background='var(--gray-50)';el.style.color='var(--text-muted)';}
+    el.textContent=d.getDate();
+    grid.appendChild(el);
+  }
+}
+
+function updateCheckinBtns(){
+  const k=todayKey();
+  const done=s.checkins[k]||{};
+  const bd=document.getElementById('btn-duolingo');
+  const bi=document.getElementById('btn-ielts');
+  if(bd)bd.style.background=done.duolingo?'var(--blue-50)':'';
+  if(bd)bd.style.borderColor=done.duolingo?'var(--blue-200)':'';
+  if(bi)bi.style.background=done.ielts?'var(--blue-50)':'';
+  if(bi)bi.style.borderColor=done.ielts?'var(--blue-200)':'';
+}
+
+function checkin(type){
+  const k=todayKey();
+  if(!s.checkins[k])s.checkins[k]={};
+  if(s.checkins[k][type]){toast('今天已经打过卡了 ✓');return;}
+  s.checkins[k][type]=true;
+  if(type==='ielts')s.ieltsDays=(s.ieltsDays||0)+1;
+  persist();renderAll();
+  toast(type==='duolingo'?'多邻国打卡成功 🌟':'雅思听力打卡成功 🎧');
+}
+
+function updateLoan(){
+  const v=parseFloat(document.getElementById('repay-input').value)||0;
+  if(v<=0){toast('请输入还款金额');return;}
+  s.loanRepaid=Math.min(24000,(s.loanRepaid||0)+v);
+  document.getElementById('repay-input').value='';
+  persist();renderAll();
+  toast('还款记录成功 💰');
+}
+
+function saveNote(){
+  const txt=document.getElementById('note-input').value.trim();
+  if(!txt){toast('请先写点内容');return;}
+  s.notes=s.notes||[];
+  s.notes.unshift({date:todayKey(),text:txt});
+  document.getElementById('note-input').value='';
+  persist();renderNotes();
+  toast('笔记已保存 ✓');
+}
+
+function renderNotes(){
+  const list=document.getElementById('notes-list');
+  const empty=document.getElementById('notes-empty');
+  if(!list)return;
+  const notes=s.notes||[];
+  if(notes.length===0){list.innerHTML='';empty.style.display='block';return;}
+  empty.style.display='none';
+  list.innerHTML=notes.map(n=>`<div class="note-item"><div class="note-date">${fmtDate(n.date)}</div><div class="note-content">${n.text.replace(/</g,'&lt;')}</div></div>`).join('');
+}
+
+function toggleSkill(id){
+  const card=document.getElementById(id);
+  const body=card.querySelector('.skill-body');
+  const chevron=card.querySelector('.chevron');
+  const isOpen=body.style.display!=='none';
+  body.style.display=isOpen?'none':'block';
+  card.classList.toggle('open',!isOpen);
+}
+
+load();renderAll();
+</script>
+</body>
+</html>
