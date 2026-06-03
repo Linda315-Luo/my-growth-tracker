@@ -462,12 +462,14 @@ function showPage(id,btn){
   btn.classList.add('active');
 }
 
+function isDayComplete(k){const c=s.checkins[k];return c&&c.duolingo&&c.ielts;}
+
 function calcStreak(){
   let streak=0;const today=new Date();
   for(let i=0;i<365;i++){
     const d=new Date(today);d.setDate(today.getDate()-i);
     const k=d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();
-    if(s.checkins[k])streak++;else if(i>0)break;
+    if(isDayComplete(k))streak++;else if(i>0)break;
   }
   return streak;
 }
@@ -512,7 +514,7 @@ function renderCalendar(){
     const d=new Date(today);d.setDate(today.getDate()-mondayOffset+i);
     const k=d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();
     const isToday=k===todayKey();
-    const isDone=s.checkins[k];
+    const isDone=isDayComplete(k);
     const isFuture=d>today;
     const el=document.createElement('div');
     el.className='day-dot'+(isDone?' done':'')+(isToday?' today':'')+(isFuture?' future':'');
@@ -531,7 +533,7 @@ function renderMonthGrid(){
     const k=d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();
     const el=document.createElement('div');
     el.style.cssText='height:26px;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:10px;font-family:DM Mono,monospace;border:1px solid var(--border);';
-    if(s.checkins[k]){el.style.background='var(--blue-50)';el.style.color='var(--blue-600)';el.style.borderColor='var(--blue-200)';}
+    if(isDayComplete(k)){el.style.background='var(--blue-50)';el.style.color='var(--blue-600)';el.style.borderColor='var(--blue-200)';}
     else{el.style.background='var(--gray-50)';el.style.color='var(--text-muted)';}
     el.textContent=d.getDate();
     grid.appendChild(el);
@@ -556,7 +558,9 @@ function checkin(type){
   s.checkins[k][type]=true;
   if(type==='ielts')s.ieltsDays=(s.ieltsDays||0)+1;
   persist();renderAll();
-  toast(type==='duolingo'?'多邻国打卡成功 🌟':'雅思听力打卡成功 🎧');
+  const bothDone=isDayComplete(k);
+  if(bothDone)toast('今日全部完成 🎉 打卡成功！');
+  else toast(type==='duolingo'?'多邻国 ✓ 还差雅思听力':'雅思听力 ✓ 还差多邻国');
 }
 
 function updateLoan(){
